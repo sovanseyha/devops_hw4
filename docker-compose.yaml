@@ -1,0 +1,45 @@
+version: '3'
+services:
+  database:
+    image: postgres:latest
+    container_name: database-container
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: sovanseyha
+      POSTGRES_PASSWORD_FILE: /run/secrets/database_secret_password
+    secrets:
+      - database_secret_password
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "6000:5432"
+
+  backend:
+    container_name: backend-container
+    build:
+      context: ./spring_api
+      dockerfile: Dockerfile
+    image: backend-home
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://database:5432/postgres
+      SPRING_DATASOURCE_USERNAME: sovanseyha
+      SPRING_DATASOURCE_PASSWORD: /run/secrets/database_secret_password
+    depends_on:
+      - database
+  frontend:
+      container_name: frontend-container
+      build:
+        context: ./01_sr_web_mini_project002
+        dockerfile: Dockerfile
+      ports:
+      - "3005:80"
+
+volumes:
+  postgres-data:
+
+secrets:
+  database_secret_password:
+    file: ./database_secret_password.txt
